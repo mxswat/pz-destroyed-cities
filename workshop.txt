@@ -1,0 +1,5 @@
+version=1
+title=DestroyedBuildings
+description=DestroyedBuildings
+tags=
+visibility=unlisted
