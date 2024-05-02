@@ -26,14 +26,16 @@ local function getClassFieldValueByName(classInstance, fieldName)
 end
 
 Events.LoadGridsquare.Add(function(square)
-  -- MxDebug:print('X:', square:getX(), 'Y:', square:getY())
-  -- MxDebug:print('getMetaGrid().Buildings', getWorld():getMetaGrid().Buildings)
-
   if doneOnce then return end
 
   local metaGrid = getWorld():getMetaGrid()
+  ---@type ArrayList
   local buildings = getClassFieldValueByName(metaGrid, 'Buildings')
   MxDebug:print('LoadGridsquare - metaGrid.Buildings', buildings)
+  MxDebug:print('LoadGridsquare - metaGrid.Buildings', buildings:size())
+
+  -- Get current count of zombies
+  ---IsoWorld.instance.CurrentCell.getZombieList().size()
 
   doneOnce = true
 end);
