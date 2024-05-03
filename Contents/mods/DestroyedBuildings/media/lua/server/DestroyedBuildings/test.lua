@@ -73,8 +73,8 @@ function DestroyedBuildingsInit()
   end
 
   -- Example usage
-  local minBuildingCount = 20             -- Adjust as needed
-  local maxDistanceBetweenBuildings = 200 -- Adjust as needed
+  local minBuildingCount = 40             -- Adjust as needed
+  local maxDistanceBetweenBuildings = 400 -- Adjust as needed
 
   -- Perform automatic K-means clustering with additional criteria
   local clusters = kmeansAuto(points, minBuildingCount, maxDistanceBetweenBuildings)
