@@ -1,15 +1,28 @@
 local MxDebug = require "MxUtilities/MxDebug"
 local getClassFieldValueByName = require "DestroyedBuildings/getClassFieldValueByName"
 
--- Function to calculate the distance between two points
+---@class ClusterPoint
+---@field x number
+---@field y number
+---@field def BuildingDef
+
+--- Function to calculate the distance between two points
+---@param x1 number
+---@param y1 number
+---@param x2 number
+---@param y2 number
+---@return number
 local function calculateDistance(x1, y1, x2, y2)
   return math.sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
 end
 
--- Function to calculate the radius of a cluster
+--- Function to calculate the radius of a cluster
+---@param center table
+---@param cluster table
+---@return number
 local function calculateRadius(center, cluster)
   local maxDistance = 0
-  for _, point in ipairs(cluster) do
+  for _, point in ipairs(cluster.points) do
     local distance = calculateDistance(center.x, center.y, point.x, point.y)
     if distance > maxDistance then
       maxDistance = distance
@@ -18,19 +31,23 @@ local function calculateRadius(center, cluster)
   return maxDistance
 end
 
--- Function to perform K-means clustering with additional criteria
+--- Function to perform K-means clustering with additional criteria
+---@param points ClusterPoint[]
+---@param minBuildingCount number
+---@param maxDistanceBetweenBuildings number
+---@return table[]
 local function kmeansAuto(points, minBuildingCount, maxDistanceBetweenBuildings)
   local clusters = {}
   local clusterCount = 0
 
   while #points > 0 do
     local seedPoint = table.remove(points, 1)
-    local cluster = { seedPoint }
+    local cluster = { points = { seedPoint }, centerX = seedPoint.x, centerY = seedPoint.y }
 
     for i = #points, 1, -1 do
       local point = points[i]
       local withinMaxDistance = true
-      for _, existingPoint in ipairs(cluster) do
+      for _, existingPoint in ipairs(cluster.points) do
         local distance = calculateDistance(point.x, point.y, existingPoint.x, existingPoint.y)
         if distance > maxDistanceBetweenBuildings then
           withinMaxDistance = false
@@ -38,38 +55,50 @@ local function kmeansAuto(points, minBuildingCount, maxDistanceBetweenBuildings)
         end
       end
       if withinMaxDistance then
-        table.insert(cluster, point)
+        table.insert(cluster.points, point)
         table.remove(points, i)
       end
     end
 
-    if #cluster >= minBuildingCount then
+    if #cluster.points >= minBuildingCount then
       clusterCount = clusterCount + 1
-      clusters[clusterCount] = cluster
+      table.insert(clusters, cluster)
     end
+  end
+
+  -- Calculate center coordinates of each cluster
+  for _, cluster in ipairs(clusters) do
+    local sumX, sumY = 0, 0
+    for _, point in ipairs(cluster.points) do
+      sumX = sumX + point.x
+      sumY = sumY + point.y
+    end
+    cluster.centerX = sumX / #cluster.points
+    cluster.centerY = sumY / #cluster.points
   end
 
   return clusters
 end
 
-function DestroyedBuildingsInit()
+--- Callback function for the game start event
+local function onGameStart()
   local startedAt = getTimestampMs()
   local metaGrid = getWorld():getMetaGrid()
 
-  ---@type ArrayList
+  ---@type table
   local buildings = getClassFieldValueByName(metaGrid, 'Buildings')
   local buildingsCount = buildings:size()
 
   MxDebug:print('OnGameStart - metaGrid.Buildings:size()', buildingsCount)
 
-  ---@type {x: number, y: number}[]
+  ---@type ClusterPoint[]
   local points = {}
   for i = 1, buildingsCount do
     local buildingDef = buildings:get(i - 1) --[[@as BuildingDef]]
     -- Calculate the center coordinates of the building using getX() and getY() methods
     local centerX = (buildingDef:getX() + buildingDef:getX2()) / 2
     local centerY = (buildingDef:getY() + buildingDef:getY2()) / 2
-    table.insert(points, { x = centerX, y = centerY })
+    table.insert(points, { x = centerX, y = centerY, def = buildingDef })
   end
 
   -- Example usage
@@ -77,36 +106,21 @@ function DestroyedBuildingsInit()
   local maxDistanceBetweenBuildings = 450 -- Adjust as needed
 
   -- Perform automatic K-means clustering with additional criteria
+  ---@type table[]
   local clusters = kmeansAuto(points, minBuildingCount, maxDistanceBetweenBuildings)
 
-  -- Pre-calculate the center coordinates of each cluster
-  for _, cluster in ipairs(clusters) do
-    local sumX, sumY = 0, 0
-    for _, point in ipairs(cluster) do
-      sumX = sumX + point.x
-      sumY = sumY + point.y
-    end
-    cluster.centerX = sumX / #cluster
-    cluster.centerY = sumY / #cluster
-  end
-
-  -- Sort the clusters by the x coordinate of their center coordinates
-  table.sort(clusters, function(cluster1, cluster2)
-    return cluster1.centerX < cluster2.centerX
-  end)
-
-  -- Calculate and print the center coordinates, radius, and average distance between buildings in each cluster (city)
+  -- Print cluster information
   for _, cluster in ipairs(clusters) do
     local centerX = cluster.centerX
     local centerY = cluster.centerY
     local radius = calculateRadius({ x = centerX, y = centerY }, cluster)
-    local buildingCount = #cluster
+    local buildingCount = #cluster.points
     local totalDistance = 0
 
     -- Calculate total distance between all pairs of buildings
     for i = 1, buildingCount - 1 do
       for j = i + 1, buildingCount do
-        local distance = calculateDistance(cluster[i].x, cluster[i].y, cluster[j].x, cluster[j].y)
+        local distance = calculateDistance(cluster.points[i].x, cluster.points[i].y, cluster.points[j].x, cluster.points[j].y)
         totalDistance = totalDistance + distance
       end
     end
@@ -126,6 +140,4 @@ function DestroyedBuildingsInit()
   MxDebug:print("Time taken:", (getTimestampMs() - startedAt) / 1000, "s")
 end
 
-Events.OnGameStart.Add(function()
-  DestroyedBuildingsInit()
-end);
+Events.OnGameStart.Add(onGameStart)
