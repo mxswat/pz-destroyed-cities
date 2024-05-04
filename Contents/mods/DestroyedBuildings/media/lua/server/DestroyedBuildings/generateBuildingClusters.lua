@@ -89,7 +89,7 @@ local function kmeansAuto(points, minBuildingCount, maxDistanceBetweenBuildings)
 end
 
 --- Callback function for the game start event
-local function onGameStart()
+local function generateBuildingClusters()
   local startedAt = getTimestampMs()
   local metaGrid = getWorld():getMetaGrid()
 
@@ -124,9 +124,9 @@ local function onGameStart()
 
   -- Print cluster information
   for _, cluster in ipairs(clusters) do
-    local centerX = cluster.centerX
-    local centerY = cluster.centerY
-    local radius = calculateRadius({ x = centerX, y = centerY }, cluster)
+    local centerX = math.floor(cluster.centerX)
+    local centerY = math.floor(cluster.centerY)
+    local radius = math.floor(calculateRadius({ x = centerX, y = centerY }, cluster))
     local buildingCount = #cluster.points
     local totalDistance = 0
 
@@ -144,14 +144,17 @@ local function onGameStart()
 
     -- Print center coordinates, radius, building count, and average distance
     print("------------", "X", "Y")
-    print("City center:", math.floor(centerX), math.floor(centerY))
-    print("City radius:", math.floor(radius))
+    print("City center:", centerX, centerY)
+    print("City radius:", radius)
     print("Buildings count:", buildingCount)
     print("Buildings Avg distance:", string.format("%.2f", avgDistance))
     print("", "")
   end
 
   MxDebug:print("Time taken:", (getTimestampMs() - startedAt) / 1000, "s")
+
+
+  return clusters
 end
 
-Events.OnGameStart.Add(onGameStart)
+return generateBuildingClusters

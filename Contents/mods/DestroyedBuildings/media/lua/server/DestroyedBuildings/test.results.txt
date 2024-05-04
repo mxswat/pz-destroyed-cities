@@ -1,0 +1,17 @@
+LOG  : General     , 1714844730408> ------------	X	Y
+LOG  : General     , 1714844730408> City center:	6448	5419
+LOG  : General     , 1714844730408> City radius:	243
+LOG  : General     , 1714844730409> Buildings count:	94
+LOG  : General     , 1714844730409> Buildings Avg distance:	211.16
+LOG  : General     , 1714844730409> 	
+LOG  : General     , 1714844730412> ------------	X	Y
+LOG  : General     , 1714844730412> City center:	7928	10722
+LOG  : General     , 1714844730412> City radius:	352
+LOG  : General     , 1714844730412> Buildings count:	63
+LOG  : General     , 1714844730412> Buildings Avg distance:	129.02
+LOG  : General     , 1714844730412> 	
+LOG  : General     , 1714844730418> ------------	X	Y
+LOG  : General     , 1714844730418> City center:	8193	11600
+LOG  : General     , 1714844730418> City radius:	281
+LOG  : General     , 1714844730418> Buildings count:	97
+LOG  : General     , 1714844730418> Buildings Avg distance:	157.53
