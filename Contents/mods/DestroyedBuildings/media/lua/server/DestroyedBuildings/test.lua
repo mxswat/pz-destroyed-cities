@@ -49,7 +49,7 @@ local function kmeansAuto(points, minBuildingCount, maxDistanceBetweenBuildings)
   while #points > 0 do
     local seedPoint = table.remove(points, 1)
     ---@type Cluster
-    local cluster = { points = { seedPoint }, centerX = seedPoint.x, centerY = seedPoint.y }
+    local cluster = { points = { seedPoint }, centerX = 0, centerY = 0 }
 
     for i = #points, 1, -1 do
       local point = points[i]
@@ -61,6 +61,7 @@ local function kmeansAuto(points, minBuildingCount, maxDistanceBetweenBuildings)
           break
         end
       end
+
       if withinMaxDistance then
         table.insert(cluster.points, point)
         table.remove(points, i)
@@ -115,6 +116,12 @@ local function onGameStart()
   -- Perform automatic K-means clustering with additional criteria
   local clusters = kmeansAuto(points, minBuildingCount, maxDistanceBetweenBuildings)
 
+  -- Sort the clusters by the x coordinate of their center coordinates
+  -- Makes it easier to check the logged results visually
+  table.sort(clusters, function(cluster1, cluster2)
+    return cluster1.centerX < cluster2.centerX
+  end)
+
   -- Print cluster information
   for _, cluster in ipairs(clusters) do
     local centerX = cluster.centerX
@@ -126,7 +133,8 @@ local function onGameStart()
     -- Calculate total distance between all pairs of buildings
     for i = 1, buildingCount - 1 do
       for j = i + 1, buildingCount do
-        local distance = calculateDistance(cluster.points[i].x, cluster.points[i].y, cluster.points[j].x, cluster.points[j].y)
+        local distance = calculateDistance(cluster.points[i].x, cluster.points[i].y, cluster.points[j].x,
+          cluster.points[j].y)
         totalDistance = totalDistance + distance
       end
     end
