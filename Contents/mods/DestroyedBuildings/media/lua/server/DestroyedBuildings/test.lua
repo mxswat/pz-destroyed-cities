@@ -6,6 +6,12 @@ local getClassFieldValueByName = require "DestroyedBuildings/getClassFieldValueB
 ---@field y number
 ---@field def BuildingDef
 
+---@class Cluster
+---@field points ClusterPoint[]
+---@field centerX number
+---@field centerY number
+
+
 --- Function to calculate the distance between two points
 ---@param x1 number
 ---@param y1 number
@@ -35,13 +41,14 @@ end
 ---@param points ClusterPoint[]
 ---@param minBuildingCount number
 ---@param maxDistanceBetweenBuildings number
----@return table[]
 local function kmeansAuto(points, minBuildingCount, maxDistanceBetweenBuildings)
+  ---@type Cluster[]
   local clusters = {}
   local clusterCount = 0
 
   while #points > 0 do
     local seedPoint = table.remove(points, 1)
+    ---@type Cluster
     local cluster = { points = { seedPoint }, centerX = seedPoint.x, centerY = seedPoint.y }
 
     for i = #points, 1, -1 do
@@ -106,7 +113,6 @@ local function onGameStart()
   local maxDistanceBetweenBuildings = 450 -- Adjust as needed
 
   -- Perform automatic K-means clustering with additional criteria
-  ---@type table[]
   local clusters = kmeansAuto(points, minBuildingCount, maxDistanceBetweenBuildings)
 
   -- Print cluster information
